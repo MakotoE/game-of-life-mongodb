@@ -109,10 +109,10 @@ func TestBoard_Tick(t *testing.T) {
 func TestGetCellWrapAround(t *testing.T) {
 	arr := [BoardWidth * BoardHeight]Cell{}
 	arr[BoardWidth*BoardHeight-1] = CellLive
-	assert.Equal(t, CellDead, GetCellWrapAround(&arr, 0))
-	assert.Equal(t, CellLive, GetCellWrapAround(&arr, -1))          // Left
-	assert.Equal(t, CellDead, GetCellWrapAround(&arr, -BoardWidth)) // Up
+	assert.Equal(t, int(CellDead), getCellWrapAround(&arr, 0))
+	assert.Equal(t, int(CellLive), getCellWrapAround(&arr, -1))          // Left
+	assert.Equal(t, int(CellDead), getCellWrapAround(&arr, -BoardWidth)) // Up
 
 	arr[BoardWidth*BoardHeight-BoardWidth-1] = CellLive
-	assert.Equal(t, CellDead, GetCellWrapAround(&arr, -BoardWidth))
+	assert.Equal(t, int(CellDead), getCellWrapAround(&arr, -BoardWidth))
 }

@@ -31,7 +31,7 @@ func (b *Board) Cell(x int, y int) Cell {
 	return b.arr[y*BoardWidth+x]
 }
 
-func GetCellWrapAround(board *[BoardWidth * BoardHeight]Cell, index int) int {
+func getCellWrapAround(board *[BoardWidth * BoardHeight]Cell, index int) int {
 	if index < 0 {
 		return int(board[BoardWidth*BoardHeight+index])
 	}
@@ -41,14 +41,14 @@ func GetCellWrapAround(board *[BoardWidth * BoardHeight]Cell, index int) int {
 func (b *Board) Tick() {
 	tmp := b.arr
 	for i := range b.arr {
-		sum := GetCellWrapAround(&b.arr, i-BoardWidth-1) +
-			GetCellWrapAround(&b.arr, i-BoardWidth) +
-			GetCellWrapAround(&b.arr, i-BoardWidth+1) +
-			GetCellWrapAround(&b.arr, i-1) +
-			GetCellWrapAround(&b.arr, i+1) +
-			GetCellWrapAround(&b.arr, i+BoardWidth-1) +
-			GetCellWrapAround(&b.arr, i+BoardWidth) +
-			GetCellWrapAround(&b.arr, i+BoardWidth+1)
+		sum := getCellWrapAround(&b.arr, i-BoardWidth-1) +
+			getCellWrapAround(&b.arr, i-BoardWidth) +
+			getCellWrapAround(&b.arr, i-BoardWidth+1) +
+			getCellWrapAround(&b.arr, i-1) +
+			getCellWrapAround(&b.arr, i+1) +
+			getCellWrapAround(&b.arr, i+BoardWidth-1) +
+			getCellWrapAround(&b.arr, i+BoardWidth) +
+			getCellWrapAround(&b.arr, i+BoardWidth+1)
 
 		if sum < 2 || sum > 3 {
 			tmp[i] = CellDead
