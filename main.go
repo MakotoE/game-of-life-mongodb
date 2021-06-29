@@ -11,10 +11,42 @@ func main() {
 	}
 	defer termbox.Close()
 
-	termbox.SetChar(0, 0, 'a')
-	if err := termbox.Flush(); err != nil {
-		panic(err)
-	}
+	stopChan := make(chan bool, 1)
+	go func() {
+		event := termbox.PollEvent()
+		if event.Err != nil {
+			panic(event.Err)
+		}
 
-	time.Sleep(time.Second * 2)
+		if event.Type == termbox.EventInterrupt || event.Type == termbox.EventKey {
+			stopChan <- true
+		}
+	}()
+
+	board := NewBoard()
+
+	for {
+		select {
+		case <-stopChan:
+			return
+		default:
+		}
+
+		for x := 0; x < BoardWidth; x++ {
+			for y := 0; y < BoardHeight; y++ {
+				color := termbox.ColorBlack
+				if board.Cell(x, y) == CellLive {
+					color = termbox.ColorWhite
+				}
+				termbox.SetBg(x, y, color)
+			}
+		}
+
+		if err := termbox.Flush(); err != nil {
+			panic(err)
+		}
+
+		time.Sleep(time.Millisecond * 100)
+		board.Tick()
+	}
 }

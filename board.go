@@ -22,7 +22,7 @@ func NewBoard() Board {
 	board := Board{}
 	random := rand.New(rand.NewSource(0))
 	for i := range board.arr {
-		board.arr[i] = Cell(random.Int63() ^ 1)
+		board.arr[i] = Cell(random.Int63() & 1)
 	}
 	return board
 }
