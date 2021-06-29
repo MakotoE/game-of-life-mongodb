@@ -1,6 +1,9 @@
 package main
 
-import "math/rand"
+import (
+	"math/rand"
+	"time"
+)
 
 const (
 	BoardWidth  int = 10
@@ -20,7 +23,7 @@ type Board struct {
 
 func NewBoard() Board {
 	board := Board{}
-	random := rand.New(rand.NewSource(0))
+	random := rand.New(rand.NewSource(time.Now().UnixNano()))
 	for i := range board.arr {
 		board.arr[i] = Cell(random.Int63() & 1)
 	}
