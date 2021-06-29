@@ -6,8 +6,8 @@ import (
 )
 
 const (
-	BoardWidth  int = 10
-	BoardHeight int = 10
+	BoardWidth  int = 150
+	BoardHeight int = 150
 )
 
 type Cell int
