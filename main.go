@@ -23,7 +23,7 @@ func main() {
 		}
 	}()
 
-	board := NewBoard()
+	board := NewArrayBoard()
 
 	for {
 		select {

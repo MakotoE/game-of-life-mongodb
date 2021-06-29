@@ -17,12 +17,12 @@ const (
 	CellLive
 )
 
-type Board struct {
+type ArrayBoard struct {
 	arr [BoardWidth * BoardHeight]Cell
 }
 
-func NewBoard() Board {
-	board := Board{}
+func NewArrayBoard() ArrayBoard {
+	board := ArrayBoard{}
 	random := rand.New(rand.NewSource(time.Now().UnixNano()))
 	for i := range board.arr {
 		board.arr[i] = Cell(random.Int63() & 1)
@@ -30,7 +30,7 @@ func NewBoard() Board {
 	return board
 }
 
-func (b *Board) Cell(x int, y int) Cell {
+func (b *ArrayBoard) Cell(x int, y int) Cell {
 	return b.arr[y*BoardWidth+x]
 }
 
@@ -41,7 +41,7 @@ func getCellWrapAround(board *[BoardWidth * BoardHeight]Cell, index int) int {
 	return int(board[index%(BoardWidth*BoardHeight)])
 }
 
-func (b *Board) Tick() {
+func (b *ArrayBoard) Tick() {
 	tmp := b.arr
 	for i := range b.arr {
 		sum := getCellWrapAround(&b.arr, i-BoardWidth-1) +

@@ -90,7 +90,7 @@ func TestBoard_Tick(t *testing.T) {
 	}
 
 	for i, test := range tests {
-		board := Board{}
+		board := ArrayBoard{}
 		for _, coordinate := range test.initiallyActivatedCells {
 			activateCell(&board.arr, coordinate[0], coordinate[1])
 		}
