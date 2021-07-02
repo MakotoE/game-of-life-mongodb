@@ -24,6 +24,7 @@ func main() {
 	}()
 
 	board := NewArrayBoard()
+	defer board.Close()
 
 	for {
 		select {
@@ -35,7 +36,11 @@ func main() {
 		for x := 0; x < BoardWidth; x++ {
 			for y := 0; y < BoardHeight; y++ {
 				color := termbox.ColorBlack
-				if board.Cell(x, y) == CellLive {
+				cell, err := board.Cell(x, y)
+				if err != nil {
+					panic(err)
+				}
+				if cell == CellLive {
 					color = termbox.ColorWhite
 				}
 				termbox.SetBg(x, y, color)
@@ -47,6 +52,8 @@ func main() {
 		}
 
 		time.Sleep(time.Millisecond * 50)
-		board.Tick()
+		if err := board.Tick(); err != nil {
+			panic(err)
+		}
 	}
 }

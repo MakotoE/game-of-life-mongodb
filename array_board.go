@@ -6,8 +6,8 @@ import (
 )
 
 const (
-	BoardWidth  int = 150
-	BoardHeight int = 150
+	BoardWidth  int = 10
+	BoardHeight int = 10
 )
 
 type Cell int
@@ -17,9 +17,18 @@ const (
 	CellLive
 )
 
+type Board interface {
+	Close() error
+	Cell(x int, y int) (Cell, error)
+	Set(x int, y int, cell Cell) error
+	Tick() error
+}
+
 type ArrayBoard struct {
 	arr [BoardWidth * BoardHeight]Cell
 }
+
+var _ Board = &ArrayBoard{}
 
 func NewArrayBoard() ArrayBoard {
 	board := ArrayBoard{}
@@ -30,28 +39,37 @@ func NewArrayBoard() ArrayBoard {
 	return board
 }
 
-func (b *ArrayBoard) Cell(x int, y int) Cell {
-	return b.arr[y*BoardWidth+x]
+func (b *ArrayBoard) Close() error {
+	return nil
 }
 
-func getCellWrapAround(board *[BoardWidth * BoardHeight]Cell, index int) int {
+func (b *ArrayBoard) Cell(x int, y int) (Cell, error) {
+	return b.arr[y*BoardWidth+x], nil
+}
+
+func (b *ArrayBoard) Set(x int, y int, cell Cell) error {
+	b.arr[y*BoardWidth+x] = cell
+	return nil
+}
+
+func wrapAroundIndex(index int) int {
 	if index < 0 {
-		return int(board[BoardWidth*BoardHeight+index])
+		return BoardWidth*BoardHeight + index
 	}
-	return int(board[index%(BoardWidth*BoardHeight)])
+	return index % (BoardWidth * BoardHeight)
 }
 
-func (b *ArrayBoard) Tick() {
+func (b *ArrayBoard) Tick() error {
 	tmp := b.arr
 	for i := range b.arr {
-		sum := getCellWrapAround(&b.arr, i-BoardWidth-1) +
-			getCellWrapAround(&b.arr, i-BoardWidth) +
-			getCellWrapAround(&b.arr, i-BoardWidth+1) +
-			getCellWrapAround(&b.arr, i-1) +
-			getCellWrapAround(&b.arr, i+1) +
-			getCellWrapAround(&b.arr, i+BoardWidth-1) +
-			getCellWrapAround(&b.arr, i+BoardWidth) +
-			getCellWrapAround(&b.arr, i+BoardWidth+1)
+		sum := b.arr[wrapAroundIndex(i-BoardWidth-1)] +
+			b.arr[wrapAroundIndex(i-BoardWidth)] +
+			b.arr[wrapAroundIndex(i-BoardWidth+1)] +
+			b.arr[wrapAroundIndex(i-1)] +
+			b.arr[wrapAroundIndex(i+1)] +
+			b.arr[wrapAroundIndex(i+BoardWidth-1)] +
+			b.arr[wrapAroundIndex(i+BoardWidth)] +
+			b.arr[wrapAroundIndex(i+BoardWidth+1)]
 
 		if sum < 2 || sum > 3 {
 			tmp[i] = CellDead
@@ -60,4 +78,5 @@ func (b *ArrayBoard) Tick() {
 		}
 	}
 	b.arr = tmp
+	return nil
 }

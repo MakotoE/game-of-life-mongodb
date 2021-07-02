@@ -2,12 +2,9 @@ package main
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"testing"
 )
-
-func activateCell(board *[BoardWidth * BoardHeight]Cell, x int, y int) {
-	board[y*BoardWidth+x] = CellLive
-}
 
 func TestBoard_Tick(t *testing.T) {
 	tests := []struct {
@@ -88,31 +85,54 @@ func TestBoard_Tick(t *testing.T) {
 			},
 		},
 	}
+	board, err := NewDatabaseBoard()
+	require.Nil(t, err)
+	defer board.Close()
 
 	for i, test := range tests {
-		board := ArrayBoard{}
+		initial := make(map[[2]int]Cell, BoardWidth*BoardHeight)
+		for x := 0; x < BoardWidth; x++ {
+			for y := 0; y < BoardHeight; y++ {
+				initial[[2]int{x, y}] = CellDead
+			}
+		}
+
 		for _, coordinate := range test.initiallyActivatedCells {
-			activateCell(&board.arr, coordinate[0], coordinate[1])
+			initial[coordinate] = CellLive
 		}
 
-		board.Tick()
+		for coordinate, cell := range initial {
+			require.Nil(t, board.Set(coordinate[0], coordinate[1], cell), i)
+		}
 
-		expected := [BoardWidth * BoardHeight]Cell{}
+		require.Nil(t, board.Tick(), i)
+
+		expected := make(map[[2]int]Cell, BoardWidth*BoardHeight)
+		for x := 0; x < BoardWidth; x++ {
+			for y := 0; y < BoardHeight; y++ {
+				expected[[2]int{x, y}] = CellDead
+			}
+		}
+
 		for _, coordinate := range test.expectedLive {
-			activateCell(&expected, coordinate[0], coordinate[1])
+			expected[coordinate] = CellLive
 		}
 
-		assert.Equal(t, expected, board.arr, i)
+		for coordinate, expectedCell := range expected {
+			result, err := board.Cell(coordinate[0], coordinate[1])
+			require.Nil(t, err, i)
+			assert.Equal(t, expectedCell, result, i)
+		}
 	}
 }
 
 func TestGetCellWrapAround(t *testing.T) {
 	arr := [BoardWidth * BoardHeight]Cell{}
 	arr[BoardWidth*BoardHeight-1] = CellLive
-	assert.Equal(t, int(CellDead), getCellWrapAround(&arr, 0))
-	assert.Equal(t, int(CellLive), getCellWrapAround(&arr, -1))          // Left
-	assert.Equal(t, int(CellDead), getCellWrapAround(&arr, -BoardWidth)) // Up
+	assert.Equal(t, CellDead, arr[wrapAroundIndex(0)])
+	assert.Equal(t, CellLive, arr[wrapAroundIndex(-1)])          // Left
+	assert.Equal(t, CellDead, arr[wrapAroundIndex(-BoardWidth)]) // Up
 
 	arr[BoardWidth*BoardHeight-BoardWidth-1] = CellLive
-	assert.Equal(t, int(CellDead), getCellWrapAround(&arr, -BoardWidth))
+	assert.Equal(t, CellDead, arr[wrapAroundIndex(-BoardWidth)])
 }
