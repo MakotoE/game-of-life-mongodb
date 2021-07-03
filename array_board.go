@@ -6,8 +6,8 @@ import (
 )
 
 const (
-	BoardWidth  int = 10
-	BoardHeight int = 10
+	BoardWidth  int = 20
+	BoardHeight int = 20
 )
 
 type Cell int
@@ -19,9 +19,25 @@ const (
 
 type Board interface {
 	Close() error
-	Cell(x int, y int) (Cell, error)
+	Cells() (CellArray, error)
 	Set(x int, y int, cell Cell) error
 	Tick() error
+}
+
+type CellArray struct {
+	Arr [BoardWidth * BoardHeight]Cell
+}
+
+func NewCellArray(setLive [][2]int) CellArray {
+	cellArray := CellArray{}
+	for _, coordinate := range setLive {
+		cellArray.Arr[coordinate[1]*BoardWidth+coordinate[0]] = CellLive
+	}
+	return cellArray
+}
+
+func (c *CellArray) Get(x int, y int) Cell {
+	return c.Arr[y*BoardWidth+x]
 }
 
 type ArrayBoard struct {
@@ -43,8 +59,8 @@ func (b *ArrayBoard) Close() error {
 	return nil
 }
 
-func (b *ArrayBoard) Cell(x int, y int) (Cell, error) {
-	return b.arr[y*BoardWidth+x], nil
+func (b *ArrayBoard) Cells() (CellArray, error) {
+	return CellArray{Arr: b.arr}, nil
 }
 
 func (b *ArrayBoard) Set(x int, y int, cell Cell) error {

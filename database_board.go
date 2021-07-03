@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -109,16 +110,33 @@ func coordinateMap(x int, y int) bson.M {
 	return bson.M{"coordinate.0": x, "coordinate.1": y}
 }
 
-func (d *DatabaseBoard) Cell(x int, y int) (Cell, error) {
+func (d *DatabaseBoard) Cells() (CellArray, error) {
 	ctx, cancel := newContext()
 	defer cancel()
-	result := d.Collection.FindOne(ctx, coordinateMap(x, y))
-	if result.Err() != nil {
-		return CellDead, result.Err()
+
+	cur, err := d.Collection.Find(ctx, bson.M{})
+	if err != nil {
+		return CellArray{}, err
 	}
 
-	cellData := &CellData{}
-	return cellData.Cell, result.Decode(cellData)
+	result := CellArray{}
+	i := 0
+
+	for cur.Next(ctx) {
+		cellData := &CellData{}
+		if err := cur.Decode(cellData); err != nil {
+			return CellArray{}, err
+		}
+
+		result.Arr[cellData.Coordinate[1]*BoardWidth+cellData.Coordinate[0]] = cellData.Cell
+		i++
+	}
+
+	if i != BoardWidth*BoardHeight {
+		return CellArray{}, fmt.Errorf("got an unexpected number of cells: %v", i)
+	}
+
+	return result, cur.Err()
 }
 
 func (d *DatabaseBoard) Set(x int, y int, cell Cell) error {

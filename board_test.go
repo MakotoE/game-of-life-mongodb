@@ -94,40 +94,20 @@ func TestBoard_Tick(t *testing.T) {
 
 	for _, board := range [...]Board{&arrayBoard, &databaseBoard} {
 		for i, test := range tests {
-			initial := make(map[[2]int]Cell, BoardWidth*BoardHeight)
-			for x := 0; x < BoardWidth; x++ {
-				for y := 0; y < BoardHeight; y++ {
-					initial[[2]int{x, y}] = CellDead
-				}
-			}
+			initialCells := NewCellArray(test.initiallyActivatedCells)
 
-			for _, coordinate := range test.initiallyActivatedCells {
-				initial[coordinate] = CellLive
-			}
-
-			for coordinate, cell := range initial {
-				err := board.Set(coordinate[0], coordinate[1], cell)
+			for i, cell := range initialCells.Arr {
+				err := board.Set(i%BoardWidth, i/BoardWidth, cell)
 				require.Nil(t, err, "%v %v", reflect.TypeOf(board), i)
 			}
 
 			require.Nil(t, board.Tick(), "%v %v", reflect.TypeOf(board), i)
 
-			expected := make(map[[2]int]Cell, BoardWidth*BoardHeight)
-			for x := 0; x < BoardWidth; x++ {
-				for y := 0; y < BoardHeight; y++ {
-					expected[[2]int{x, y}] = CellDead
-				}
-			}
+			result, err := board.Cells()
+			require.Nil(t, err, "%v %v", reflect.TypeOf(board), i)
 
-			for _, coordinate := range test.expectedLive {
-				expected[coordinate] = CellLive
-			}
-
-			for coordinate, expectedCell := range expected {
-				result, err := board.Cell(coordinate[0], coordinate[1])
-				require.Nil(t, err, "%v %v", reflect.TypeOf(board), i)
-				assert.Equal(t, expectedCell, result, "%v %v", reflect.TypeOf(board), i)
-			}
+			expected := NewCellArray(test.expectedLive)
+			assert.Equal(t, expected, result, "%v %v", reflect.TypeOf(board), i)
 		}
 	}
 }

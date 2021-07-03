@@ -23,7 +23,10 @@ func main() {
 		}
 	}()
 
-	board := NewArrayBoard()
+	board, err := NewDatabaseBoard()
+	if err != nil {
+		panic(err)
+	}
 	defer board.Close()
 
 	for {
@@ -33,14 +36,15 @@ func main() {
 		default:
 		}
 
+		cells, err := board.Cells()
+		if err != nil {
+			panic(err)
+		}
+
 		for x := 0; x < BoardWidth; x++ {
 			for y := 0; y < BoardHeight; y++ {
 				color := termbox.ColorBlack
-				cell, err := board.Cell(x, y)
-				if err != nil {
-					panic(err)
-				}
-				if cell == CellLive {
+				if cells.Get(x, y) == CellLive {
 					color = termbox.ColorWhite
 				}
 				termbox.SetBg(x, y, color)
