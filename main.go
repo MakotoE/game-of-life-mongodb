@@ -30,12 +30,6 @@ func main() {
 	defer board.Close()
 
 	for {
-		select {
-		case <-stopChan:
-			return
-		default:
-		}
-
 		cells, err := board.Cells()
 		if err != nil {
 			panic(err)
@@ -55,9 +49,15 @@ func main() {
 			panic(err)
 		}
 
-		time.Sleep(time.Millisecond * 50)
+		timerChan := time.After(time.Millisecond * 50)
 		if err := board.Tick(); err != nil {
 			panic(err)
+		}
+
+		select {
+		case <-timerChan:
+		case <-stopChan:
+			return
 		}
 	}
 }
