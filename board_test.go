@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"reflect"
 	"testing"
 )
 
@@ -85,43 +86,48 @@ func TestBoard_Tick(t *testing.T) {
 			},
 		},
 	}
-	board, err := NewDatabaseBoard()
+
+	arrayBoard := NewArrayBoard()
+	databaseBoard, err := NewDatabaseBoard()
 	require.Nil(t, err)
-	defer board.Close()
+	defer databaseBoard.Close()
 
-	for i, test := range tests {
-		initial := make(map[[2]int]Cell, BoardWidth*BoardHeight)
-		for x := 0; x < BoardWidth; x++ {
-			for y := 0; y < BoardHeight; y++ {
-				initial[[2]int{x, y}] = CellDead
+	for _, board := range [...]Board{&arrayBoard, &databaseBoard} {
+		for i, test := range tests {
+			initial := make(map[[2]int]Cell, BoardWidth*BoardHeight)
+			for x := 0; x < BoardWidth; x++ {
+				for y := 0; y < BoardHeight; y++ {
+					initial[[2]int{x, y}] = CellDead
+				}
 			}
-		}
 
-		for _, coordinate := range test.initiallyActivatedCells {
-			initial[coordinate] = CellLive
-		}
-
-		for coordinate, cell := range initial {
-			require.Nil(t, board.Set(coordinate[0], coordinate[1], cell), i)
-		}
-
-		require.Nil(t, board.Tick(), i)
-
-		expected := make(map[[2]int]Cell, BoardWidth*BoardHeight)
-		for x := 0; x < BoardWidth; x++ {
-			for y := 0; y < BoardHeight; y++ {
-				expected[[2]int{x, y}] = CellDead
+			for _, coordinate := range test.initiallyActivatedCells {
+				initial[coordinate] = CellLive
 			}
-		}
 
-		for _, coordinate := range test.expectedLive {
-			expected[coordinate] = CellLive
-		}
+			for coordinate, cell := range initial {
+				err := board.Set(coordinate[0], coordinate[1], cell)
+				require.Nil(t, err, "%v %v", reflect.TypeOf(board), i)
+			}
 
-		for coordinate, expectedCell := range expected {
-			result, err := board.Cell(coordinate[0], coordinate[1])
-			require.Nil(t, err, i)
-			assert.Equal(t, expectedCell, result, i)
+			require.Nil(t, board.Tick(), "%v %v", reflect.TypeOf(board), i)
+
+			expected := make(map[[2]int]Cell, BoardWidth*BoardHeight)
+			for x := 0; x < BoardWidth; x++ {
+				for y := 0; y < BoardHeight; y++ {
+					expected[[2]int{x, y}] = CellDead
+				}
+			}
+
+			for _, coordinate := range test.expectedLive {
+				expected[coordinate] = CellLive
+			}
+
+			for coordinate, expectedCell := range expected {
+				result, err := board.Cell(coordinate[0], coordinate[1])
+				require.Nil(t, err, "%v %v", reflect.TypeOf(board), i)
+				assert.Equal(t, expectedCell, result, "%v %v", reflect.TypeOf(board), i)
+			}
 		}
 	}
 }

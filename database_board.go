@@ -105,10 +105,14 @@ func (d *DatabaseBoard) Close() error {
 	return d.Client.Disconnect(ctx)
 }
 
+func coordinateMap(x int, y int) bson.M {
+	return bson.M{"coordinate.0": x, "coordinate.1": y}
+}
+
 func (d *DatabaseBoard) Cell(x int, y int) (Cell, error) {
 	ctx, cancel := newContext()
 	defer cancel()
-	result := d.Collection.FindOne(ctx, bson.M{"coordinate.0": x, "coordinate.1": y})
+	result := d.Collection.FindOne(ctx, coordinateMap(x, y))
 	if result.Err() != nil {
 		return CellDead, result.Err()
 	}
@@ -122,7 +126,7 @@ func (d *DatabaseBoard) Set(x int, y int, cell Cell) error {
 	defer cancel()
 	_, err := d.Collection.UpdateOne(
 		ctx,
-		bson.M{"coordinate.0": x, "coordinate.1": y},
+		coordinateMap(x, y),
 		mongo.Pipeline{{{"$set", bson.M{"cell": cell}}}},
 	)
 	return err
@@ -142,38 +146,14 @@ func coordinates(x int, y int) bson.A {
 	topRow := wrapAround(y, -1, BoardHeight)
 	bottomRow := wrapAround(y, 1, BoardHeight)
 	return bson.A{
-		bson.D{
-			{"coordinate.0", leftColumn},
-			{"coordinate.1", topRow},
-		},
-		bson.D{
-			{"coordinate.0", x},
-			{"coordinate.1", topRow},
-		},
-		bson.D{
-			{"coordinate.0", rightColumn},
-			{"coordinate.1", topRow},
-		},
-		bson.D{
-			{"coordinate.0", leftColumn},
-			{"coordinate.1", y},
-		},
-		bson.D{
-			{"coordinate.0", rightColumn},
-			{"coordinate.1", y},
-		},
-		bson.D{
-			{"coordinate.0", leftColumn},
-			{"coordinate.1", bottomRow},
-		},
-		bson.D{
-			{"coordinate.0", x},
-			{"coordinate.1", bottomRow},
-		},
-		bson.D{
-			{"coordinate.0", rightColumn},
-			{"coordinate.1", bottomRow},
-		},
+		coordinateMap(leftColumn, topRow),
+		coordinateMap(x, topRow),
+		coordinateMap(rightColumn, topRow),
+		coordinateMap(leftColumn, y),
+		coordinateMap(rightColumn, y),
+		coordinateMap(leftColumn, bottomRow),
+		coordinateMap(x, bottomRow),
+		coordinateMap(rightColumn, bottomRow),
 	}
 }
 
@@ -221,7 +201,7 @@ func (d *DatabaseBoard) Tick() error {
 				if sum < 2 || sum > 3 {
 					_, err := copiedCollection.UpdateOne(
 						ctx,
-						bson.D{{"coordinate.0", x}, {"coordinate.1", y}},
+						coordinateMap(x, y),
 						bson.M{"$set": bson.M{"cell": CellDead}},
 					)
 					if err != nil {
@@ -230,7 +210,7 @@ func (d *DatabaseBoard) Tick() error {
 				} else if sum == 3 {
 					findResult := d.Collection.FindOne(
 						ctx,
-						bson.D{{"coordinate.0", x}, {"coordinate.1", y}},
+						coordinateMap(x, y),
 					)
 					if findResult.Err() != nil {
 						return findResult.Err()
